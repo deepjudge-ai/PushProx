@@ -79,6 +79,16 @@ var (
 	)
 )
 
+func createURL(host string, path string, params url.Values) string {
+	u := &url.URL{
+		Scheme:   "https",
+		Host:     host,
+		Path:     path,
+		RawQuery: params.Encode(),
+	}
+	return u.String()
+}
+
 func init() {
 	prometheus.MustRegister(pushErrorCounter, pollErrorCounter, scrapeErrorCounter)
 }
