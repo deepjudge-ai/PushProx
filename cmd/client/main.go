@@ -81,7 +81,7 @@ var (
 
 func createURL(host string, path string, params url.Values) string {
 	u := &url.URL{
-		Scheme:   "https",
+		Scheme:   "http",
 		Host:     host,
 		Path:     path,
 		RawQuery: params.Encode(),
