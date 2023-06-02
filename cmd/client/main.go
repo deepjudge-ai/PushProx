@@ -152,10 +152,11 @@ func (c *Coordinator) doScrape(request *http.Request, client *http.Client) {
 		request.URL.Scheme = "https"
 	}
 
-	if request.URL.Hostname() != *myFqdn {
-		c.handleErr(request, client, errors.New("scrape target doesn't match client fqdn"))
-		return
-	}
+	// We disable the check
+	// if request.URL.Hostname() != *myFqdn {
+	// 	c.handleErr(request, client, errors.New("scrape target doesn't match client fqdn"))
+	// 	return
+	// }
 
 	port := request.URL.Port()
 	if len(port) > 0 {
@@ -167,6 +168,23 @@ func (c *Coordinator) doScrape(request *http.Request, client *http.Client) {
 			request.URL.Host = fmt.Sprintf("127.0.0.1:%s", port)
 		}
 	}
+
+	// Hard code to prometheus federate endpoint
+	// TODO: Make it configurable and align it with other parameters
+	fmt.Sprintln("We adpapt the URL to federate endpoint")
+	request.URL.Host = "prometheus-server.prometheus.svc.cluster.local:80"
+	request.URL.Scheme = "http"
+	host := "prometheus-server.prometheus.svc.cluster.local"
+	path := "federate"
+	parameters := url.Values{}
+	parameters.Set("match[]", "{job='kubernetes-pods'}")
+	url := createURL(host, path, parameters)
+	request, err = http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+	fmt.Printf("make call to: %s", request.URL.String())
 
 	scrapeResp, err := client.Do(request)
 	if err != nil {
