@@ -89,6 +89,42 @@ func createURL(host string, path string, params url.Values) string {
 	return u.String()
 }
 
+func printPostResponse(resp *http.Response) {
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return
+	}
+
+	// Print the response status code and body
+	fmt.Println("Response Status:", resp.Status)
+	response := string(body)
+	fmt.Println("Response Body:", response)
+}
+
+func scrapeFederatedPrometheusEndpoint() (*http.Response, error) {
+	fmt.Sprintln("We adpapt the URL to federate endpoint")
+
+	request, err := http.NewRequest("GET", "prometheus-server.prometheus.svc.cluster.local:80", nil)
+	request.URL.Scheme = "http"
+	host := "prometheus-server.prometheus.svc.cluster.local"
+	path := "federate"
+	parameters := url.Values{}
+	parameters.Set("match[]", "{job='kubernetes-pods'}")
+	url := createURL(host, path, parameters)
+	request, err = http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return nil, err
+	}
+	fmt.Printf("make call to: %s", request.URL.String())
+	client := &http.Client{}
+	return client.Do(request)
+}
+
 func init() {
 	prometheus.MustRegister(pushErrorCounter, pollErrorCounter, scrapeErrorCounter)
 }
@@ -171,22 +207,8 @@ func (c *Coordinator) doScrape(request *http.Request, client *http.Client) {
 
 	// Hard code to prometheus federate endpoint
 	// TODO: Make it configurable and align it with other parameters
-	fmt.Sprintln("We adpapt the URL to federate endpoint")
-	request.URL.Host = "prometheus-server.prometheus.svc.cluster.local:80"
-	request.URL.Scheme = "http"
-	host := "prometheus-server.prometheus.svc.cluster.local"
-	path := "federate"
-	parameters := url.Values{}
-	parameters.Set("match[]", "{job='kubernetes-pods'}")
-	url := createURL(host, path, parameters)
-	request, err = http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return
-	}
-	fmt.Printf("make call to: %s", request.URL.String())
-
-	scrapeResp, err := client.Do(request)
+	scrapeResp, err := scrapeFederatedPrometheusEndpoint()
+	// printPostResponse(scrapeResp)
 	if err != nil {
 		msg := fmt.Sprintf("failed to scrape %s", request.URL.String())
 		c.handleErr(request, client, errors.Wrap(err, msg))

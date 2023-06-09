@@ -1,6 +1,6 @@
-FROM ubuntu:latest
+FROM golang:latest
 
-COPY bin/pushprox-client /usr/local/bin/
-COPY bin/pushprox-proxy /usr/local/bin/
+COPY cmd/client/pushprox-client /usr/local/bin/
+COPY cmd/proxy/pushprox-proxy /usr/local/bin/
 
 CMD [ "pushprox-client" ]
