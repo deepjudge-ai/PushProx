@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "args": ["--proxy-url", "https://pushprox.dev.c.z1.deepjudge.ai", "--fqdn=10.42.0.140" ]
+            "args": ["--proxy-url", "https://pushprox.dev.c.z1.deepjudge.ai", "--fqdn=local-k3d", "--match", "{job='kubernetes-pods'}", "--match", "{job='prometheus'}" ]
         }
     ]
 }

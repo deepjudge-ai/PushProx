@@ -56,6 +56,8 @@ var (
 
 	retryInitialWait = kingpin.Flag("proxy.retry.initial-wait", "Amount of time to wait after proxy failure").Default("1s").Duration()
 	retryMaxWait     = kingpin.Flag("proxy.retry.max-wait", "Maximum amount of time to wait between proxy poll retries").Default("5s").Duration()
+
+	matchStrings = kingpin.Flag("match", "federate matches").Default().Strings()
 )
 
 var (
@@ -113,14 +115,19 @@ func scrapeFederatedPrometheusEndpoint() (*http.Response, error) {
 	host := "prometheus-server.prometheus.svc.cluster.local"
 	path := "federate"
 	parameters := url.Values{}
-	parameters.Set("match[]", "{job='kubernetes-pods'}")
+
+	for _, s := range *matchStrings {
+		parameters.Add("match[]", s)
+	}
+
 	url := createURL(host, path, parameters)
+
 	request, err = http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return nil, err
 	}
-	fmt.Printf("make call to: %s", request.URL.String())
+	fmt.Printf("make call to: %s", url)
 	client := &http.Client{}
 	return client.Do(request)
 }
@@ -309,6 +316,16 @@ func main() {
 	kingpin.Parse()
 	logger := promlog.New(&promlogConfig)
 	coordinator := Coordinator{logger: logger}
+
+	// if matchStrings array is empty
+	if len(*matchStrings) == 0 {
+		level.Error(coordinator.logger).Log("msg", "minimum one --match flag must be specified.")
+		os.Exit(-1)
+	}
+
+	for _, s := range *matchStrings {
+		fmt.Println("Use match value ", s)
+	}
 
 	if *proxyURL == "" {
 		level.Error(coordinator.logger).Log("msg", "--proxy-url flag must be specified.")

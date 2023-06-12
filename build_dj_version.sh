@@ -1,6 +1,6 @@
 export GOOS=linux 
 export GOARCH=amd64
-export VERSION=0.5
+export VERSION=0.8
 
 # build client
 cd cmd/client
