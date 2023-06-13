@@ -213,7 +213,6 @@ func (c *Coordinator) doScrape(request *http.Request, client *http.Client) {
 	}
 
 	// Hard code to prometheus federate endpoint
-	// TODO: Make it configurable and align it with other parameters
 	scrapeResp, err := scrapeFederatedPrometheusEndpoint()
 	// printPostResponse(scrapeResp)
 	if err != nil {
